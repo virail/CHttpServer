@@ -21,7 +21,7 @@ int main(void)
 	if (res != 0)
 	{
 
-		printf("Error initialising sockets on windows");
+		printf("Error initialising sockets\n");
 		return -1;
 
 	}
@@ -34,7 +34,7 @@ int main(void)
 	if (sock == INVALID_SOCKET)
 	{
 
-		printf("Error initialising sockets on windows");
+		printf("Error initialising sockets\n");
 		WSACleanup();
 		return -1;
 
@@ -48,14 +48,39 @@ int main(void)
 	if (res != 0)
 	{
 
-		printf("Error initialising sockets on windows");
+		printf("Error initialising sockets");
 		closesocket(sock);
 		WSACleanup();
 		return -1;
 
 	}
-	else
-		printf("Success! socket bound");
+
+	printf("Success! socket bound\n");
+
+	int connectionBackLog = 5;
+	res = listen(sock, connectionBackLog);
+	if (res != 0)
+	{
+
+		printf("Error listening to socket\n");
+		WSACleanup();
+		return -1;
+
+	}
+
+	printf("Socket Listening to: 127.0.0.1:27015\n");
+
+	res = accept(sock, NULL, NULL);
+	if (res != 0)
+	{
+
+		printf("Error accepting connections with socket\n");
+		WSACleanup();
+		return -1;
+
+	}
+
+	printf("Accepting connections!");
 
 	WSACleanup();
 
