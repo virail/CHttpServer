@@ -68,19 +68,33 @@ int main(void)
 
 	}
 
+	SOCKET acceptSocket;
 	printf("Socket Listening to: 127.0.0.1:27015\n");
 
-	res = accept(sock, NULL, NULL);
+	acceptSocket = accept(sock, NULL, NULL);
 	if (res != 0)
 	{
 
 		printf("Error accepting connections with socket\n");
+		wprintf(L"accept failed with error: %ld\n", WSAGetLastError());
+		closesocket(sock);
 		WSACleanup();
 		return -1;
 
 	}
 
-	printf("Accepting connections!");
+	printf("Accepting connections\n!");
+
+	char recvbuf[512];
+
+	res = recv(acceptSocket, recvbuf, 512, 0);
+
+	if (res > 0)
+		printf("Bytes received: %d\n", res);
+	else if (res == 0)
+		printf("Connection closed!\n");
+	else
+		printf("recv failed: %d\n", WSAGetLastError());
 
 	WSACleanup();
 
