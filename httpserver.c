@@ -9,6 +9,37 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
+int CompareStrings(char* string1, char* string2)
+{
+
+	while (*string1 && *string2)
+	{
+
+		if (*string1 != *string2)
+		{
+
+			return -1;
+
+		}
+
+		string1++;
+		string2++;
+
+	}
+
+	return (*string1 == '\0' && *string2 == '\0');
+
+}
+
+/*****************************************
+******** own split function **************
+*****************************************/
+/*
+* @Params: char* string, char delimitter
+* @Returns: char**
+*
+* @Info: takes a string and splits by delimitter
+*/
 char** split(char* string, char delimitter)
 {
 	// first find number of parts
@@ -64,6 +95,8 @@ char** split(char* string, char delimitter)
 		printf("result of split: %s\n", res[i]);
 
 	}
+
+	return res;
 
 }
 int main(void)
@@ -167,8 +200,31 @@ int main(void)
 	printf("First Line: %s\n", line);
 
 	char** splitLine = split(line, ' ');
-;
 	
+	if (CompareStrings(splitLine[1], "/") == 0)
+	{
+
+		FILE* f = fopen("index.html", "r");
+		fseek(f, 0, SEEK_END);
+		long fsize = ftell(f);
+		fseek(f, 0, SEEK_SET);
+
+		char* file = (char*) malloc(sizeof(char) * (fsize + 1));
+		fread(file, fsize, 1, f);
+		fclose(f);
+
+		int i = 0;
+		while (file[i] != '\r' || file[i] != '\n' || file[i] != '\0')
+		{
+
+			printf("%c",file[i]);
+			i++;
+
+		}
+
+
+	}
+
 	WSACleanup();
 
 	return -1;
