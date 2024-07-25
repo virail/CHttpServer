@@ -9,6 +9,20 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
+int StringLength(char* string)
+{
+
+	int count = 0;
+	while (*string != '\0')
+	{
+		count++;
+		string++;
+	}
+
+	return count;
+
+}
+
 int CompareStrings(char* string1, char* string2)
 {
 
@@ -176,9 +190,10 @@ int main(void)
 
 	printf("Accepting connections!\n");
 
+	// ------------------------ SETUP -------------------
+
 	char recvbuf[512];
 	res = recv(acceptSocket, recvbuf, 512, 0);
-
 	if (res > 0)
 		printf("Bytes received: %d\n", res);
 	else if (res == 0)
@@ -188,6 +203,7 @@ int main(void)
 
 	printf("%s\n", recvbuf);
 
+	// --------------------- Get first line ---------------------
 	int endLine = 0;
 	while (recvbuf[endLine] != '\n') 
 		endLine++;
@@ -199,9 +215,11 @@ int main(void)
 
 	printf("First Line: %s\n", line);
 
+	// ------------- Split Line -------------
+
 	char** splitLine = split(line, ' ');
 	
-	if (CompareStrings(splitLine[1], "/") == 0)
+	if (CompareStrings(splitLine[1], "/") == 1)
 	{
 
 		FILE* f = fopen("index.html", "r");
@@ -214,13 +232,39 @@ int main(void)
 		fclose(f);
 
 		int i = 0;
-		while (file[i] != '\r' || file[i] != '\n' || file[i] != '\0')
+		while (file[i] != '\0')
 		{
 
 			printf("%c",file[i]);
 			i++;
 
 		}
+
+		char* headers = "HTTP/1.1 200 OK\
+Content-Type: text/html";
+		int headersLen = StringLength(headers);
+
+		char *response = (char*) malloc(sizeof(char) * (headersLen + fsize + 1));
+
+		for (int i = 0; i < headersLen; i++)
+		{
+
+			response[i] = headers[i];
+
+		}
+		response[headersLen] = '\n';
+		int fileIndex = 0;
+		for (int i = headersLen + 1; i < headersLen + fsize + 1; i++)
+		{
+
+			response[i] = file[fileIndex];
+			fileIndex++;
+
+		}
+
+		int responseLen = StringLength(response);
+
+		send(acceptSocket, response, responseLen, 0);
 
 
 	}
