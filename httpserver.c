@@ -188,86 +188,92 @@ int main(void)
 
 	}
 
-	printf("Accepting connections!\n");
+	printf("Accepted connections!\n");
 
 	// ------------------------ SETUP -------------------
 
 	char recvbuf[512];
 	res = recv(acceptSocket, recvbuf, 512, 0);
 	if (res > 0)
+	{
 		printf("Bytes received: %d\n", res);
+
+		printf("%s\n", recvbuf);
+
+		// --------------------- Get first line ---------------------
+		int endLine = 0;
+		while (recvbuf[endLine] != '\n') 
+			endLine++;
+
+		char* line = (char*) malloc(sizeof(char) * endLine);
+
+		for (int i = 0; i < endLine; i++)
+			line[i] = recvbuf[i];
+
+		printf("First Line: %s\n", line);
+
+		// ------------- Split Line -------------
+
+		char** splitLine = split(line, ' ');
+		
+		if (CompareStrings(splitLine[1], "/") == 1)
+		{
+
+			FILE* f = fopen("index.html", "r");
+			fseek(f, 0, SEEK_END);
+			long fsize = ftell(f);
+			fseek(f, 0, SEEK_SET);
+
+			char* file = (char*) malloc(sizeof(char) * (fsize + 1));
+			fread(file, fsize, 1, f);
+			fclose(f);
+
+			int i = 0;
+			while (file[i] != '\0')
+			{
+
+				printf("%c",file[i]);
+				i++;
+
+			}
+
+			char* headers = "HTTP/1.1 200 OK\r\n"
+							"\r\n";
+			int headersLen = StringLength(headers);
+
+			char *response = (char*) malloc(sizeof(char) * (headersLen + fsize + 1));
+
+			for (int i = 0; i < headersLen; i++)
+			{
+
+				response[i] = headers[i];
+
+			}
+			response[headersLen] = '\n';
+			int fileIndex = 0;
+			for (int i = headersLen + 1; i < headersLen + fsize + 1; i++)
+			{
+
+				response[i] = file[fileIndex];
+				fileIndex++;
+
+			}
+
+			int responseLen = StringLength(response);
+
+			send(acceptSocket, response, responseLen, 0);
+
+		}
+
+	}
 	else if (res == 0)
 		printf("Connection closed!\n");
 	else
 		printf("recv failed: %d\n", WSAGetLastError());
 
-	printf("%s\n", recvbuf);
+	closesocket(acceptSocket);
 
-	// --------------------- Get first line ---------------------
-	int endLine = 0;
-	while (recvbuf[endLine] != '\n') 
-		endLine++;
-
-	char* line = (char*) malloc(sizeof(char) * endLine);
-
-	for (int i = 0; i < endLine; i++)
-		line[i] = recvbuf[i];
-
-	printf("First Line: %s\n", line);
-
-	// ------------- Split Line -------------
-
-	char** splitLine = split(line, ' ');
-	
-	if (CompareStrings(splitLine[1], "/") == 1)
-	{
-
-		FILE* f = fopen("index.html", "r");
-		fseek(f, 0, SEEK_END);
-		long fsize = ftell(f);
-		fseek(f, 0, SEEK_SET);
-
-		char* file = (char*) malloc(sizeof(char) * (fsize + 1));
-		fread(file, fsize, 1, f);
-		fclose(f);
-
-		int i = 0;
-		while (file[i] != '\0')
-		{
-
-			printf("%c",file[i]);
-			i++;
-
-		}
-
-		char* headers = "HTTP/1.1 200 OK\
-Content-Type: text/html";
-		int headersLen = StringLength(headers);
-
-		char *response = (char*) malloc(sizeof(char) * (headersLen + fsize + 1));
-
-		for (int i = 0; i < headersLen; i++)
-		{
-
-			response[i] = headers[i];
-
-		}
-		response[headersLen] = '\n';
-		int fileIndex = 0;
-		for (int i = headersLen + 1; i < headersLen + fsize + 1; i++)
-		{
-
-			response[i] = file[fileIndex];
-			fileIndex++;
-
-		}
-
-		int responseLen = StringLength(response);
-
-		send(acceptSocket, response, responseLen, 0);
-
-
-	}
+	closesocket(sock);
 
 	WSACleanup();
 
